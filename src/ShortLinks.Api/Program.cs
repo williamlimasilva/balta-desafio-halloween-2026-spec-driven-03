@@ -22,14 +22,6 @@ if (!Uri.TryCreate(linkOptions.PublicBaseUrl, UriKind.Absolute, out var publicBa
 
 linkOptions.PublicBaseUrl = linkOptions.PublicBaseUrl.TrimEnd('/');
 
-var linkSecurityOptions = builder.Configuration
-	.GetSection(LinkSecurityOptions.SectionName)
-	.Get<LinkSecurityOptions>() ?? new LinkSecurityOptions();
-
-var validatedFingerprintKey = linkSecurityOptions.GetValidatedClientIpFingerprintKey();
-var clientIpFingerprintService = new ShortLinks.Application.Security.ClientIpFingerprintService(validatedFingerprintKey);
-System.Security.Cryptography.CryptographicOperations.ZeroMemory(validatedFingerprintKey);
-
 var databasePath = Path.IsPathRooted(linkOptions.DatabasePath)
 	? linkOptions.DatabasePath
 	: Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, linkOptions.DatabasePath));
@@ -46,7 +38,22 @@ var connectionString = new SqliteConnectionStringBuilder
 }.ToString();
 
 builder.Services.AddSingleton(linkOptions);
-builder.Services.AddSingleton(clientIpFingerprintService);
+builder.Services.AddSingleton(services =>
+{
+	var linkSecurityOptions = services.GetRequiredService<IConfiguration>()
+		.GetSection(LinkSecurityOptions.SectionName)
+		.Get<LinkSecurityOptions>() ?? new LinkSecurityOptions();
+
+	var validatedFingerprintKey = linkSecurityOptions.GetValidatedClientIpFingerprintKey();
+	try
+	{
+		return new ShortLinks.Application.Security.ClientIpFingerprintService(validatedFingerprintKey);
+	}
+	finally
+	{
+		System.Security.Cryptography.CryptographicOperations.ZeroMemory(validatedFingerprintKey);
+	}
+});
 builder.Services.AddSingleton<ShortLinks.Application.Security.ManagementKeyService>();
 builder.Services.AddSingleton<ShortLinks.Application.Links.ShortCodeGenerator>();
 builder.Services.AddSingleton<ShortLinks.Application.Links.AsyncKeyedLock>();
@@ -66,6 +73,8 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+app.Services.GetRequiredService<ShortLinks.Application.Security.ClientIpFingerprintService>();
 
 using (var scope = app.Services.CreateScope())
 {
