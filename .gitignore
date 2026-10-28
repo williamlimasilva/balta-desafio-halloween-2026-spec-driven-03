@@ -1,0 +1,29 @@
+# .NET build output and test artifacts
+bin/
+obj/
+TestResults/
+*.trx
+*.coverage
+*.cobertura.xml
+
+# Visual Studio / IDE user state
+.vs/
+*.user
+*.suo
+.idea/
+.vscode/
+
+# Local SQLite database (created at runtime from appsettings DatabasePath)
+src/ShortLinks.Api/App_Data/*.db
+src/ShortLinks.Api/App_Data/*.db-shm
+src/ShortLinks.Api/App_Data/*.db-wal
+
+# Secrets and local environment
+secrets.json
+*.env
+.env
+appsettings.*.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
