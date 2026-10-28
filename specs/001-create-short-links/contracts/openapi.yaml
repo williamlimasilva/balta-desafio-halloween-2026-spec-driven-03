@@ -1,0 +1,226 @@
+openapi: 3.1.0
+info:
+  title: Short Links API
+  version: 1.0.0
+  description: API for creating, redirecting, and querying usage of short links.
+servers:
+  - url: https://short.example.com
+    description: Configured public base address
+paths:
+  /api/links:
+    post:
+      operationId: createLink
+      summary: Create a short link
+      description: Returns a one-time management key. The key is not returned again.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLinkRequest"
+      responses:
+        "201":
+          description: Link created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateLinkResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/CodeConflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /{code}:
+    get:
+      operationId: redirectToDestination
+      summary: Redirect to an active destination
+      description: Increments the access count atomically before returning the redirect.
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      responses:
+        "302":
+          description: Redirect to the stored destination.
+          headers:
+            Location:
+              required: true
+              schema:
+                type: string
+                format: uri
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "410":
+          $ref: "#/components/responses/Expired"
+  /api/links/{code}/stats:
+    get:
+      operationId: getLinkStats
+      summary: Get access statistics
+      security:
+        - ManagementKey: []
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      responses:
+        "200":
+          description: Current access count.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkStatsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  securitySchemes:
+    ManagementKey:
+      type: apiKey
+      in: header
+      name: X-Management-Key
+      description: Secret returned only when the link is created.
+  parameters:
+    Code:
+      name: code
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 4
+        maxLength: 20
+        pattern: "^[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789]{4,20}$"
+  responses:
+    BadRequest:
+      description: Invalid request. Details are in Portuguese.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    CodeConflict:
+      description: The requested custom code is already in use.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    RateLimited:
+      description: The client IP exceeded the creation quota.
+      headers:
+        Retry-After:
+          description: Seconds until a new creation is permitted.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    NotFound:
+      description: The short code does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Expired:
+      description: The short link has expired and was not counted.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Unauthorized:
+      description: A valid management key is required.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+  schemas:
+    CreateLinkRequest:
+      type: object
+      required:
+        - destinationUrl
+      properties:
+        destinationUrl:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: Absolute HTTP or HTTPS URL with a host.
+          pattern: "^https?://.+"
+        customCode:
+          type: string
+          minLength: 4
+          maxLength: 20
+          pattern: "^[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789]{4,20}$"
+        expiresAtUtc:
+          type: string
+          format: date-time
+          description: Optional UTC timestamp in the future.
+    CreateLinkResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - shortUrl
+        - managementKey
+        - createdAtUtc
+        - expiresAtUtc
+      properties:
+        code:
+          type: string
+          minLength: 4
+          maxLength: 20
+          pattern: "^[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789]{4,20}$"
+        shortUrl:
+          type: string
+          format: uri
+        managementKey:
+          type: string
+          minLength: 43
+          maxLength: 43
+          description: Base64url encoding of 256 random bits; returned only at creation.
+        createdAtUtc:
+          type: string
+          format: date-time
+        expiresAtUtc:
+          type:
+            - string
+            - "null"
+          format: date-time
+    LinkStatsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - accessCount
+      properties:
+        code:
+          type: string
+        accessCount:
+          type: integer
+          format: int64
+          minimum: 0
+    ProblemDetails:
+      type: object
+      description: RFC 9457 problem response with user-facing detail in Portuguese.
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      required:
+        - title
+        - status
