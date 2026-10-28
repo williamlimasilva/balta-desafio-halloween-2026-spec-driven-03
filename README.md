@@ -2,27 +2,100 @@
 
 ## 🎃 Halloween - Desafio 3
 
-Oi, eu sou o [seu nome aqui] e este é o espaço onde compartilho minha jornada de aprendizado durante o desafio **Halloween 2026**, realizado pelo [balta.io](https://balta.io). 👻
+Este repositório contém um encurtador de URLs desenvolvido como parte do
+Desafio 3 do Halloween 2026 da [balta.io](https://balta.io), aplicando
+Spec-Driven Development com SpecKit.
 
-Aqui você vai encontrar projetos, exercícios e códigos que estou desenvolvendo durante o desafio.
+## O que foi implementado
 
-### Sobre este desafio
-Neste desafio o objetivo é criar um encurtador de URLs completo utilizando os conceitos de Spec-Driven Development via SpecKit
+- API para criar links curtos e redirecionar para as URLs originais.
+- Personalização de códigos, expiração de links e consulta de estatísticas.
+- Persistência em SQLite com Entity Framework Core.
+- Testes unitários e de integração.
 
-#### O que foi implementado
-- [Listar detalhes da implementação]
+<img src="https://baltaio.blob.core.windows.net/static/images/v4/challenges/halloween-2026/03.png" width="200" alt="Badge do Desafio 3" />
 
-Neste processo eu aprendi:
-* ✅
+## Sobre a aplicação
 
-## Bagde
-<img src="https://baltaio.blob.core.windows.net/static/images/v4/challenges/halloween-2026/03.png" width="200" />
+O projeto usa .NET 10, ASP.NET Core Minimal APIs, Entity Framework Core e
+SQLite.
 
-## Problema
---
+## Requisitos
 
-## Sobre o Halloween 2026
-O desafio **Halloween 2026** consiste em implementar implementar o modelo Spec Driven Development de ponta a ponta, criando apps completas com IA.
+- .NET 10 SDK.
+- PowerShell.
 
-### Veja meu progresso no desafio
-[Incluir link para o repositório central]
+## Executar localmente
+
+Abra o PowerShell e vá para a raiz do repositório:
+
+```powershell
+Set-Location 'C:\Private\Courses\Balta\desafio 3\balta-desafio-halloween-2026-spec-driven-03'
+```
+
+Execute os comandos abaixo **a partir da raiz**:
+
+```powershell
+# Restaurar as dependências da solução
+dotnet restore
+
+# Restaurar a ferramenta local do Entity Framework Core
+dotnet tool restore
+
+# Criar uma chave temporária para desenvolvimento local
+$env:LinkSecurity__ClientIpFingerprintKey = [Convert]::ToBase64String(
+    [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
+)
+
+# Aplicar as migrações do banco SQLite (opcional: a API também migra ao iniciar)
+dotnet ef database update --project src\ShortLinks.Infrastructure --startup-project src\ShortLinks.Api
+
+# Iniciar a API em http://localhost:5000
+dotnet run --project src\ShortLinks.Api --urls http://localhost:5000
+```
+
+Com a API em execução, acesse a documentação interativa em
+[http://localhost:5000/swagger](http://localhost:5000/swagger).
+
+Para encerrar a aplicação, pressione **Ctrl+C** no terminal em que `dotnet run`
+está em execução.
+
+### Chave de segurança
+
+A API exige a configuração `LinkSecurity__ClientIpFingerprintKey`, que deve ser
+uma chave Base64 com pelo menos 32 bytes. O comando acima gera uma chave
+temporária para desenvolvimento local. Para preservar a identificação por IP
+entre reinicializações, use a mesma chave. Em produção, configure uma chave
+estável por meio de um mecanismo seguro; não a salve no repositório.
+
+### Comandos úteis
+
+Execute-os a partir da raiz do repositório:
+
+```powershell
+# Compilar a solução
+dotnet build
+
+# Executar os testes unitários e de integração
+dotnet test
+```
+
+Para iniciar a API de outro diretório, informe o caminho para o projeto
+`src\ShortLinks.Api\ShortLinks.Api.csproj` no parâmetro `--project`.
+
+## Estrutura da solução
+
+- `src\ShortLinks.Api`: endpoints HTTP e inicialização da aplicação.
+- `src\ShortLinks.Application`: regras de negócio e serviços de links.
+- `src\ShortLinks.Infrastructure`: persistência SQLite e migrações do EF Core.
+- `tests\ShortLinks.UnitTests`: testes unitários.
+- `tests\ShortLinks.IntegrationTests`: testes de integração da API.
+- `specs\001-create-short-links`: especificação, plano, contrato e guia detalhado.
+
+O arquivo do banco de dados local fica em
+`src\ShortLinks.Api\Data\shortlinks.db`, conforme a configuração atual.
+O caminho é relativo ao diretório da aplicação; em produção, configure
+`Links:DatabasePath` para um caminho persistente e gravável fora dos arquivos
+publicados da aplicação.
+Os detalhes do fluxo funcional e cenários de validação estão em
+[specs/001-create-short-links/quickstart.md](specs/001-create-short-links/quickstart.md).
