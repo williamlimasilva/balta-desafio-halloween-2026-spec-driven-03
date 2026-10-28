@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ShortLinks.Api.Errors;
 using ShortLinks.Api.Endpoints;
 using ShortLinks.Api.Options;
+using Swashbuckle.AspNetCore.SwaggerUI;
 using ShortLinks.Application.Links;
 using ShortLinks.Infrastructure.Persistence;
 using ApiLinkOptions = ShortLinks.Api.Options.LinkOptions;
@@ -69,10 +70,21 @@ builder.Services.AddScoped<LinkService>(services => new LinkService(
 	services.GetRequiredService<ApiLinkOptions>().PublicBaseUrl));
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+if (app.Environment.IsDevelopment())
+{
+	app.MapOpenApi();
+	app.UseSwaggerUI(options =>
+	{
+		options.SwaggerEndpoint("/openapi/v1.json", "ShortLinks API v1");
+		options.RoutePrefix = "swagger";
+	});
+}
 
 app.Services.GetRequiredService<ShortLinks.Application.Security.ClientIpFingerprintService>();
 
