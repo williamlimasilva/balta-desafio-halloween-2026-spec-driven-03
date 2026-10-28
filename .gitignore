@@ -14,9 +14,9 @@ TestResults/
 .vscode/
 
 # Local SQLite database (created at runtime from appsettings DatabasePath)
-src/ShortLinks.Api/App_Data/*.db
-src/ShortLinks.Api/App_Data/*.db-shm
-src/ShortLinks.Api/App_Data/*.db-wal
+src/ShortLinks.Api/Data/*.db
+src/ShortLinks.Api/Data/*.db-shm
+src/ShortLinks.Api/Data/*.db-wal
 
 # Secrets and local environment
 secrets.json
