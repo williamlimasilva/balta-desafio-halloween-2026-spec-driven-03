@@ -1,4 +1,5 @@
 # .NET build output and test artifacts
+/artifacts/
 bin/
 obj/
 TestResults/
