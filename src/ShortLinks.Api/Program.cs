@@ -1,9 +1,9 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using ShortLinks.Api.Errors;
 using ShortLinks.Api.Endpoints;
 using ShortLinks.Api.Options;
-using Swashbuckle.AspNetCore.SwaggerUI;
 using ShortLinks.Application.Links;
 using ShortLinks.Infrastructure.Persistence;
 using ApiLinkOptions = ShortLinks.Api.Options.LinkOptions;
@@ -79,11 +79,7 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
 	app.MapOpenApi();
-	app.UseSwaggerUI(options =>
-	{
-		options.SwaggerEndpoint("/openapi/v1.json", "ShortLinks API v1");
-		options.RoutePrefix = "swagger";
-	});
+	app.MapScalarApiReference();
 }
 
 app.Services.GetRequiredService<ShortLinks.Application.Security.ClientIpFingerprintService>();

@@ -55,7 +55,7 @@ dotnet run --project src\ShortLinks.Api --urls http://localhost:5000
 ```
 
 Com a API em execução, acesse a documentação interativa em
-[http://localhost:5000/swagger](http://localhost:5000/swagger).
+[http://localhost:5000/scalar](http://localhost:5000/scalar).
 
 Para encerrar a aplicação, pressione **Ctrl+C** no terminal em que `dotnet run`
 está em execução.
