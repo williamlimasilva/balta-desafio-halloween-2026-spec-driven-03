@@ -50,6 +50,9 @@ $env:LinkSecurity__ClientIpFingerprintKey = [Convert]::ToBase64String(
 # Aplicar as migrações do banco SQLite (opcional: a API também migra ao iniciar)
 dotnet ef database update --project src\ShortLinks.Infrastructure --startup-project src\ShortLinks.Api
 
+# Habilitar a documentação interativa (Scalar roda só em Development)
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+
 # Iniciar a API em http://localhost:5000
 dotnet run --project src\ShortLinks.Api --urls http://localhost:5000
 ```
